@@ -110,3 +110,89 @@ resource "aws_route_table_association" "private_b" {
   subnet_id      = aws_subnet.private_b.id
   route_table_id = aws_route_table.private.id
 }
+
+resource "aws_security_group" "alb" {
+  name        = "breticos-alb-sg"
+  description = "Security group for Breticos Application Load Balancer"
+  vpc_id      = aws_vpc.breticos.id
+
+  ingress {
+    description = "HTTP from internet"
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    description = "HTTPS from internet"
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+    description = "Allow outbound traffic"
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name = "breticos-alb-sg"
+  }
+}
+
+resource "aws_security_group" "backend" {
+  name        = "breticos-backend-sg"
+  description = "Security group for Breticos backend"
+  vpc_id      = aws_vpc.breticos.id
+
+  ingress {
+    description     = "Backend traffic from ALB"
+    from_port       = 8080
+    to_port         = 8080
+    protocol        = "tcp"
+    security_groups = [aws_security_group.alb.id]
+  }
+
+  egress {
+    description = "Allow outbound traffic"
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name = "breticos-backend-sg"
+  }
+}
+
+resource "aws_security_group" "database" {
+  name        = "breticos-database-sg"
+  description = "Security group for Breticos database"
+  vpc_id      = aws_vpc.breticos.id
+
+  ingress {
+    description     = "PostgreSQL from backend"
+    from_port       = 5432
+    to_port         = 5432
+    protocol        = "tcp"
+    security_groups = [aws_security_group.backend.id]
+  }
+
+  egress {
+    description = "Allow outbound traffic"
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name = "breticos-database-sg"
+  }
+}
