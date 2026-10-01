@@ -288,3 +288,59 @@ resource "aws_db_instance" "breticos" {
     Name = "breticos-db"
   }
 }
+
+resource "aws_ecr_repository" "backend" {
+  name                 = "breticos-backend"
+  image_tag_mutability = "MUTABLE"
+
+  image_scanning_configuration {
+    scan_on_push = true
+  }
+
+  tags = {
+    Name = "breticos-backend"
+  }
+}
+
+resource "aws_ecs_cluster" "breticos" {
+  name = "breticos"
+
+  tags = {
+    Name = "breticos-ecs"
+  }
+}
+
+resource "aws_iam_role" "ecs_task_execution" {
+  name = "breticos-ecs-task-execution-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Principal = {
+          Service = "ecs-tasks.amazonaws.com"
+        }
+        Action = "sts:AssumeRole"
+      }
+    ]
+  })
+
+  tags = {
+    Name = "breticos-ecs-task-execution-role"
+  }
+}
+
+resource "aws_iam_role_policy_attachment" "ecs_task_execution" {
+  role       = aws_iam_role.ecs_task_execution.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
+}
+
+resource "aws_cloudwatch_log_group" "backend" {
+  name              = "/ecs/breticos-backend"
+  retention_in_days = 7
+
+  tags = {
+    Name = "breticos-backend-logs"
+  }
+}
