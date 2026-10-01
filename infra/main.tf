@@ -215,3 +215,22 @@ resource "aws_lb" "breticos" {
     Name = "breticos-alb"
   }
 }
+
+resource "aws_lb_target_group" "backend" {
+  name        = "breticos-backend-tg"
+  port        = 8080
+  protocol    = "HTTP"
+  target_type = "ip"
+  vpc_id      = aws_vpc.breticos.id
+
+  health_check {
+    enabled  = true
+    path     = "/health"
+    protocol = "HTTP"
+    port     = "traffic-port"
+  }
+
+  tags = {
+    Name = "breticos-backend-tg"
+  }
+}
