@@ -196,3 +196,22 @@ resource "aws_security_group" "database" {
     Name = "breticos-database-sg"
   }
 }
+
+resource "aws_lb" "breticos" {
+  name               = "breticos-alb"
+  internal           = false
+  load_balancer_type = "application"
+
+  security_groups = [
+    aws_security_group.alb.id
+  ]
+
+  subnets = [
+    aws_subnet.public_a.id,
+    aws_subnet.public_b.id
+  ]
+
+  tags = {
+    Name = "breticos-alb"
+  }
+}
